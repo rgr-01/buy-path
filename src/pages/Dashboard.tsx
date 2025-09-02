@@ -2,6 +2,9 @@ import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useRequisicoes } from "@/hooks/useRequisicoes";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { 
   FileText, 
   Clock, 
@@ -12,20 +15,33 @@ import {
   Calendar,
   DollarSign
 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export function Dashboard() {
+  const { stats, minhasRequisicoes, requisicoesParaAprovar, loading } = useRequisicoes();
+  const { profile, isAprovador } = useAuth();
+  const navigate = useNavigate();
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
   // Mock data - will be replaced with real data from Supabase
-  const stats = [
+  const statsData = [
     {
       title: "Total de Requisições",
-      value: "147",
+      value: stats.total.toString(),
       description: "Este mês",
       icon: FileText,
       trend: { value: 12, label: "vs mês anterior" }
     },
     {
-      title: "Pendentes de Aprovação",
-      value: "23",
+      title: isAprovador ? "Para Aprovar" : "Pendentes de Aprovação",
+      value: isAprovador ? requisicoesParaAprovar.length.toString() : stats.pendentes.toString(),
       description: "Aguardando revisão",
       icon: Clock,
       variant: "warning" as const,
@@ -33,7 +49,7 @@ export function Dashboard() {
     },
     {
       title: "Aprovadas",
-      value: "89",
+      value: stats.aprovadas.toString(),
       description: "Neste mês",
       icon: CheckSquare,
       variant: "success" as const,
@@ -41,52 +57,56 @@ export function Dashboard() {
     },
     {
       title: "Valor Total",
-      value: "R$ 45.320",
+      value: formatCurrency(stats.valorTotal),
       description: "Requisições aprovadas",
       icon: DollarSign,
       trend: { value: 7, label: "vs mês anterior" }
     }
   ];
 
-  const recentRequests = [
-    {
-      id: "REQ-2024-001",
-      description: "Material de escritório - Canetas e papel",
-      department: "Administrativo",
-      value: "R$ 250,00",
-      status: "pending",
-      date: "2024-01-15"
-    },
-    {
-      id: "REQ-2024-002", 
-      description: "Equipamentos de TI - Notebook Dell",
-      department: "TI",
-      value: "R$ 2.500,00",
-      status: "approved",
-      date: "2024-01-14"
-    },
-    {
-      id: "REQ-2024-003",
-      description: "Material de limpeza",
-      department: "Manutenção",
-      value: "R$ 180,00",
-      status: "rejected",
-      date: "2024-01-13"
-    }
-  ];
+  const recentRequests = minhasRequisicoes.slice(0, 3).map(req => ({
+    id: req.codigo,
+    description: req.justificativa.length > 50 ? req.justificativa.substring(0, 50) + "..." : req.justificativa,
+    department: req.departamento?.nome || "N/A",
+    value: formatCurrency(req.valor_total),
+    status: req.status,
+    date: format(new Date(req.created_at), "dd/MM/yyyy", { locale: ptBR })
+  }));
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "pending":
+      case "pendente":
         return <Badge variant="secondary" className="bg-warning-light text-warning-foreground">Pendente</Badge>;
-      case "approved":
+      case "aprovada":
         return <Badge variant="secondary" className="bg-success-light text-success-foreground">Aprovada</Badge>;
-      case "rejected":
+      case "rejeitada":
         return <Badge variant="secondary" className="bg-destructive-light text-destructive-foreground">Rejeitada</Badge>;
+      case "rascunho":
+        return <Badge variant="secondary" className="bg-muted text-muted-foreground">Rascunho</Badge>;
       default:
         return <Badge variant="secondary">Desconhecido</Badge>;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="space-y-2">
+          <div className="h-8 bg-muted rounded w-64"></div>
+          <div className="h-4 bg-muted rounded w-96"></div>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 bg-muted rounded"></div>
+          ))}
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="lg:col-span-2 h-96 bg-muted rounded"></div>
+          <div className="h-96 bg-muted rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -106,7 +126,7 @@ export function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => (
+        {statsData.map((stat, index) => (
           <StatsCard key={index} {...stat} />
         ))}
       </div>
@@ -158,21 +178,23 @@ export function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full justify-start" size="lg">
+            <Button variant="outline" className="w-full justify-start" size="lg" onClick={() => navigate('/nova-requisicao')}>
               <Plus className="h-4 w-4 mr-2" />
               Criar Nova Requisição
             </Button>
-            <Button variant="outline" className="w-full justify-start" size="lg">
+            <Button variant="outline" className="w-full justify-start" size="lg" onClick={() => navigate('/requisicoes')}>
               <FileText className="h-4 w-4 mr-2" />
               Ver Todas as Requisições
             </Button>
+            {isAprovador && (
+              <Button variant="outline" className="w-full justify-start" size="lg" onClick={() => navigate('/pendentes')}>
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Requisições Pendentes
+              </Button>
+            )}
             <Button variant="outline" className="w-full justify-start" size="lg">
               <Calendar className="h-4 w-4 mr-2" />
               Agendar Reunião
-            </Button>
-            <Button variant="outline" className="w-full justify-start" size="lg">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Itens Pendentes
             </Button>
           </CardContent>
         </Card>

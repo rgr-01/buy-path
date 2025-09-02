@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useRequisicoes } from "@/hooks/useRequisicoes";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,29 +21,34 @@ import {
   FileText
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface ItemRequisicao {
   id: string;
   nome: string;
   descricao: string;
   quantidade: number;
-  precoUnitario: number;
-  precoTotal: number;
+  preco_unitario: number;
+  preco_total: number;
 }
 
 export function NovaRequisicao() {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { departamentos, fornecedores, createRequisicao, enviarParaAprovacao } = useRequisicoes();
   const [departamento, setDepartamento] = useState("");
   const [fornecedor, setFornecedor] = useState("");
   const [justificativa, setJustificativa] = useState("");
+  const [loading, setLoading] = useState(false);
   const [itens, setItens] = useState<ItemRequisicao[]>([
     {
       id: "1",
       nome: "",
       descricao: "",
       quantidade: 1,
-      precoUnitario: 0,
-      precoTotal: 0
+      preco_unitario: 0,
+      preco_total: 0
     }
   ]);
 
@@ -51,8 +58,8 @@ export function NovaRequisicao() {
       nome: "",
       descricao: "",
       quantidade: 1,
-      precoUnitario: 0,
-      precoTotal: 0
+      preco_unitario: 0,
+      preco_total: 0
     };
     setItens([...itens, novoItem]);
   };
@@ -69,8 +76,8 @@ export function NovaRequisicao() {
         const itemAtualizado = { ...item, [campo]: valor };
         
         // Recalcular preço total se quantidade ou preço unitário mudou
-        if (campo === 'quantidade' || campo === 'precoUnitario') {
-          itemAtualizado.precoTotal = itemAtualizado.quantidade * itemAtualizado.precoUnitario;
+        if (campo === 'quantidade' || campo === 'preco_unitario') {
+          itemAtualizado.preco_total = itemAtualizado.quantidade * itemAtualizado.preco_unitario;
         }
         
         return itemAtualizado;
@@ -80,19 +87,62 @@ export function NovaRequisicao() {
   };
 
   const calcularTotal = () => {
-    return itens.reduce((total, item) => total + item.precoTotal, 0);
+    return itens.reduce((total, item) => total + item.preco_total, 0);
   };
 
-  const salvarRascunho = () => {
-    toast({
-      title: "Rascunho salvo",
-      description: "Sua requisição foi salva como rascunho.",
-    });
+  const salvarRascunho = async () => {
+    if (!departamento || !justificativa.trim()) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha departamento e justificativa.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await createRequisicao(
+        {
+          departamento_id: departamento,
+          fornecedor_sugerido_id: fornecedor || undefined,
+          justificativa,
+        },
+        itens.filter(item => item.nome.trim()).map(item => ({
+          nome: item.nome,
+          descricao: item.descricao || null,
+          quantidade: item.quantidade,
+          preco_unitario: item.preco_unitario,
+        }))
+      );
+
+      if (error) {
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar o rascunho.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Rascunho salvo",
+          description: "Sua requisição foi salva como rascunho.",
+        });
+        navigate('/requisicoes');
+      }
+    } catch (error) {
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const enviarRequisicao = () => {
+  const enviarRequisicao = async () => {
     // Validação básica
-    if (!departamento || !fornecedor || !justificativa) {
+    if (!departamento || !justificativa.trim()) {
       toast({
         title: "Erro de validação",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -101,7 +151,7 @@ export function NovaRequisicao() {
       return;
     }
 
-    if (itens.some(item => !item.nome || item.quantidade <= 0)) {
+    if (itens.some(item => !item.nome.trim() || item.quantidade <= 0)) {
       toast({
         title: "Erro de validação",
         description: "Por favor, preencha todos os itens corretamente.",
@@ -110,10 +160,56 @@ export function NovaRequisicao() {
       return;
     }
 
-    toast({
-      title: "Requisição enviada",
-      description: "Sua requisição foi enviada para aprovação.",
-    });
+    setLoading(true);
+    try {
+      const { data, error } = await createRequisicao(
+        {
+          departamento_id: departamento,
+          fornecedor_sugerido_id: fornecedor || undefined,
+          justificativa,
+        },
+        itens.filter(item => item.nome.trim()).map(item => ({
+          nome: item.nome,
+          descricao: item.descricao || null,
+          quantidade: item.quantidade,
+          preco_unitario: item.preco_unitario,
+        }))
+      );
+
+      if (error || !data) {
+        toast({
+          title: "Erro ao criar",
+          description: "Não foi possível criar a requisição.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Enviar para aprovação
+      const { error: enviarError } = await enviarParaAprovacao(data.id);
+      
+      if (enviarError) {
+        toast({
+          title: "Erro ao enviar",
+          description: "Requisição criada mas não foi possível enviar para aprovação.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Requisição enviada",
+          description: "Sua requisição foi enviada para aprovação.",
+        });
+        navigate('/requisicoes');
+      }
+    } catch (error) {
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -128,11 +224,19 @@ export function NovaRequisicao() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={salvarRascunho}>
+            <Button 
+              variant="outline" 
+              onClick={salvarRascunho}
+              disabled={loading}
+            >
               <Save className="h-4 w-4 mr-2" />
               Salvar Rascunho
             </Button>
-            <Button onClick={enviarRequisicao} className="bg-gradient-primary hover:bg-primary-hover">
+            <Button 
+              onClick={enviarRequisicao} 
+              className="bg-gradient-primary hover:bg-primary-hover"
+              disabled={loading}
+            >
               <Send className="h-4 w-4 mr-2" />
               Enviar para Aprovação
             </Button>
@@ -159,7 +263,7 @@ export function NovaRequisicao() {
                     <Label htmlFor="requisicao-id">ID da Requisição</Label>
                     <Input 
                       id="requisicao-id" 
-                      value="REQ-2024-004" 
+                      value="Auto-gerado" 
                       disabled 
                       className="bg-muted"
                     />
@@ -180,7 +284,7 @@ export function NovaRequisicao() {
                     <Label htmlFor="solicitante">Solicitante</Label>
                     <Input 
                       id="solicitante" 
-                      value="João Silva" 
+                      value={profile?.nome || "Carregando..."}
                       disabled 
                       className="bg-muted"
                     />
@@ -192,126 +296,30 @@ export function NovaRequisicao() {
                         <SelectValue placeholder="Selecione o departamento" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="ti">Tecnologia da Informação</SelectItem>
-                        <SelectItem value="rh">Recursos Humanos</SelectItem>
-                        <SelectItem value="financeiro">Financeiro</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                        <SelectItem value="operacoes">Operações</SelectItem>
-                        <SelectItem value="administrativo">Administrativo</SelectItem>
+                        {departamentos.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.nome}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="fornecedor">Fornecedor Sugerido *</Label>
+                  <Label htmlFor="fornecedor">Fornecedor Sugerido</Label>
                   <Select value={fornecedor} onValueChange={setFornecedor}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um fornecedor" />
+                      <SelectValue placeholder="Selecione um fornecedor (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="fornecedor-a">Fornecedor A - Material de Escritório</SelectItem>
-                      <SelectItem value="fornecedor-b">Fornecedor B - Equipamentos de TI</SelectItem>
-                      <SelectItem value="fornecedor-c">Fornecedor C - Móveis</SelectItem>
-                      <SelectItem value="fornecedor-d">Fornecedor D - Serviços</SelectItem>
+                      {fornecedores.map((forn) => (
+                        <SelectItem key={forn.id} value={forn.id}>
+                          {forn.nome} {forn.categoria && `- ${forn.categoria}`}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Itens da Requisição */}
-            <Card className="bg-gradient-card shadow-soft border-border">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Calculator className="h-5 w-5 text-primary" />
-                      Itens da Requisição
-                    </CardTitle>
-                    <CardDescription>
-                      Adicione os itens que deseja requisitar
-                    </CardDescription>
-                  </div>
-                  <Button onClick={adicionarItem} variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Item
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {itens.map((item, index) => (
-                    <div key={item.id} className="p-4 border border-border rounded-lg bg-card/50">
-                      <div className="flex items-center justify-between mb-3">
-                        <Badge variant="secondary">Item {index + 1}</Badge>
-                        {itens.length > 1 && (
-                          <Button
-                            onClick={() => removerItem(item.id)}
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                      
-                      <div className="grid gap-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label>Nome do Item *</Label>
-                            <Input
-                              value={item.nome}
-                              onChange={(e) => atualizarItem(item.id, 'nome', e.target.value)}
-                              placeholder="Ex: Notebook Dell Inspiron"
-                            />
-                          </div>
-                          <div>
-                            <Label>Quantidade *</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              value={item.quantidade}
-                              onChange={(e) => atualizarItem(item.id, 'quantidade', parseInt(e.target.value) || 1)}
-                            />
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <Label>Descrição</Label>
-                          <Textarea
-                            value={item.descricao}
-                            onChange={(e) => atualizarItem(item.id, 'descricao', e.target.value)}
-                            placeholder="Descrição detalhada do item"
-                            rows={2}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-3 gap-3">
-                          <div>
-                            <Label>Preço Unitário</Label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={item.precoUnitario}
-                              onChange={(e) => atualizarItem(item.id, 'precoUnitario', parseFloat(e.target.value) || 0)}
-                              placeholder="0,00"
-                            />
-                          </div>
-                          <div>
-                            <Label>Preço Total</Label>
-                            <Input
-                              value={`R$ ${item.precoTotal.toFixed(2).replace('.', ',')}`}
-                              disabled
-                              className="bg-muted font-medium"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -330,23 +338,8 @@ export function NovaRequisicao() {
                     onChange={(e) => setJustificativa(e.target.value)}
                     placeholder="Explique a necessidade desta compra..."
                     rows={4}
+                    required
                   />
-                </div>
-
-                <div>
-                  <Label>Anexos</Label>
-                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Arraste arquivos aqui ou clique para fazer upload
-                    </p>
-                    <Button variant="outline" size="sm">
-                      Selecionar Arquivos
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      PDF, JPG, PNG - Máximo 10MB por arquivo
-                    </p>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -367,12 +360,6 @@ export function NovaRequisicao() {
                     <span className="text-muted-foreground">Total de itens:</span>
                     <span className="font-medium">{itens.length}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Quantidade total:</span>
-                    <span className="font-medium">
-                      {itens.reduce((total, item) => total + item.quantidade, 0)}
-                    </span>
-                  </div>
                   <Separator />
                   <div className="flex justify-between">
                     <span className="font-medium">Valor Total:</span>
@@ -384,19 +371,9 @@ export function NovaRequisicao() {
 
                 <div className="space-y-2 pt-4">
                   <h4 className="font-medium text-sm">Status:</h4>
-                  <Badge variant="secondary" className="bg-warning-light text-warning-foreground">
-                    Rascunho
+                  <Badge variant="secondary" className="bg-muted text-muted-foreground">
+                    Novo Rascunho
                   </Badge>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Próximos passos:</h4>
-                  <ul className="text-xs text-muted-foreground space-y-1">
-                    <li>• Revisar todos os itens</li>
-                    <li>• Anexar cotações (opcional)</li>
-                    <li>• Enviar para aprovação</li>
-                    <li>• Aguardar análise do gestor</li>
-                  </ul>
                 </div>
               </CardContent>
             </Card>
