@@ -45,7 +45,7 @@ export function useAuth() {
       if (error) {
         console.error('Error fetching profile:', error);
       } else {
-        setProfile(data);
+        setProfile(data as Profile);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -105,7 +105,7 @@ export function useAuth() {
       .single();
 
     if (!error && data) {
-      setProfile(data);
+      setProfile(data as Profile);
     }
 
     return { data, error };

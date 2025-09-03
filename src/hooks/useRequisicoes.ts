@@ -92,12 +92,10 @@ export function useRequisicoes() {
       // Create requisition
       const { data: requisicao, error: reqError } = await supabase
         .from('requisicoes')
-        .insert([
-          {
-            ...requisicaoData,
-            solicitante_id: user.id,
-          },
-        ])
+        .insert({
+          ...requisicaoData,
+          solicitante_id: profile?.id,
+        })
         .select()
         .single();
 
