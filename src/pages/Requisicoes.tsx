@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { downloadRequisicaoPDF, generateRelatorioGeralPDF } from "@/utils/pdfGenerator";
 import { 
   FileText, 
   Search, 
@@ -15,7 +17,9 @@ import {
   Edit,
   Calendar,
   Building2,
-  User
+  User,
+  FileBarChart,
+  Download
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
