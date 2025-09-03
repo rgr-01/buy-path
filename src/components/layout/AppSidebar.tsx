@@ -33,7 +33,7 @@ const navigationItems = [
 
 const adminItems = [
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
-  { title: "Usuários", url: "/usuarios", icon: Users },
+  { title: "Usuários", url: "/admin/usuarios", icon: Users },
   { title: "Fornecedores", url: "/fornecedores", icon: Building2 },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];

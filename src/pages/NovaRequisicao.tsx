@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { FileUpload } from "@/components/forms/FileUpload";
 import { 
   Plus, 
   Trash2, 
@@ -18,7 +19,8 @@ import {
   Send,
   Calculator,
   Building2,
-  FileText
+  FileText,
+  Paperclip
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -40,6 +42,7 @@ export function NovaRequisicao() {
   const [departamento, setDepartamento] = useState("");
   const [fornecedor, setFornecedor] = useState("");
   const [justificativa, setJustificativa] = useState("");
+  const [anexos, setAnexos] = useState<{ name: string; url: string; size: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const [itens, setItens] = useState<ItemRequisicao[]>([
     {
@@ -341,6 +344,27 @@ export function NovaRequisicao() {
                     required
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Anexos */}
+            <Card className="bg-gradient-card shadow-soft border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Paperclip className="h-5 w-5" />
+                  Anexos
+                </CardTitle>
+                <CardDescription>
+                  Anexe documentos, cotações ou arquivos relacionados à requisição
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FileUpload
+                  onFilesChange={setAnexos}
+                  existingFiles={anexos}
+                  maxFiles={5}
+                  maxSize={10}
+                />
               </CardContent>
             </Card>
           </div>

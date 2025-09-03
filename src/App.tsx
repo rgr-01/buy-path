@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import { NovaRequisicao } from "./pages/NovaRequisicao";
 import { Requisicoes } from "./pages/Requisicoes";
 import { Pendentes } from "./pages/Pendentes";
+import AdminUsuarios from "./pages/AdminUsuarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/nova-requisicao" element={<NovaRequisicao />} />
             <Route path="/requisicoes" element={<Requisicoes />} />
             <Route path="/pendentes" element={<Pendentes />} />
+            <Route path="/admin/usuarios" element={<AdminUsuarios />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

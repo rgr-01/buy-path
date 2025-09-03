@@ -24,6 +24,7 @@ export function Requisicoes() {
   const { minhasRequisicoes, loading } = useRequisicoes();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const { toast } = useToast();
 
   const filteredRequisicoes = minhasRequisicoes.filter(req => {
     const matchesSearch = req.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -57,6 +58,38 @@ export function Requisicoes() {
     }).format(value);
   };
 
+  const handleDownloadPDF = async (requisicao: any) => {
+    try {
+      await downloadRequisicaoPDF(requisicao);
+      toast({
+        title: "Sucesso",
+        description: "PDF gerado com sucesso",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao gerar PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadRelatorio = async () => {
+    try {
+      await generateRelatorioGeralPDF(filteredRequisicoes);
+      toast({
+        title: "Sucesso",
+        description: "Relatório geral gerado com sucesso",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao gerar relatório",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -82,6 +115,11 @@ export function Requisicoes() {
               Gerencie suas requisições de compras
             </p>
           </div>
+          
+          <Button onClick={handleDownloadRelatorio} variant="outline">
+            <FileBarChart className="h-4 w-4 mr-2" />
+            Relatório Geral
+          </Button>
         </div>
 
         {/* Filters */}
@@ -205,6 +243,13 @@ export function Requisicoes() {
                         <div className="flex items-center gap-2">
                           <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDownloadPDF(requisicao)}
+                          >
+                            <Download className="h-4 w-4" />
                           </Button>
                           {requisicao.status === 'rascunho' && (
                             <Button variant="ghost" size="sm">
