@@ -1,6 +1,14 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { Requisicao } from '@/lib/supabase';
+import type { Database } from '@/integrations/supabase/types';
+
+type Requisicao = Database['public']['Tables']['requisicoes']['Row'] & {
+  solicitante?: Database['public']['Tables']['profiles']['Row'];
+  departamento?: Database['public']['Tables']['departamentos']['Row'];
+  fornecedor_sugerido?: Database['public']['Tables']['fornecedores']['Row'];
+  aprovador?: Database['public']['Tables']['profiles']['Row'];
+  itens?: Database['public']['Tables']['itens_requisicao']['Row'][];
+};
 
 export const generateRequisicaoPDF = async (requisicao: Requisicao) => {
   const pdf = new jsPDF();

@@ -24,6 +24,8 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+type Requisicao = ReturnType<typeof useRequisicoes>['minhasRequisicoes'][0];
+
 export function Requisicoes() {
   const { minhasRequisicoes, loading } = useRequisicoes();
   const [searchTerm, setSearchTerm] = useState("");

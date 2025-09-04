@@ -24,7 +24,8 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import type { Requisicao } from "@/lib/supabase";
+
+type Requisicao = ReturnType<typeof useRequisicoes>['requisicoesParaAprovar'][0];
 
 export function Pendentes() {
   const { requisicoesParaAprovar, aprovarRequisicao, rejeitarRequisicao, loading } = useRequisicoes();

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase, Profile } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -103,16 +106,14 @@ export default function AdminUsuarios() {
         // Create profile
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert([
-            {
-              id: authData.user.id,
-              nome: data.nome,
-              email: data.email,
-              departamento: data.departamento,
-              cargo: data.cargo,
-              role: data.role,
-            },
-          ]);
+          .insert({
+            user_id: authData.user.id,
+            nome: data.nome,
+            email: data.email,
+            departamento: data.departamento,
+            cargo: data.cargo,
+            role: data.role,
+          });
 
         if (profileError) throw profileError;
 
@@ -143,7 +144,7 @@ export default function AdminUsuarios() {
       email: user.email,
       departamento: user.departamento || '',
       cargo: user.cargo || '',
-      role: user.role,
+      role: user.role as 'solicitante' | 'aprovador' | 'admin',
     });
     setDialogOpen(true);
   };

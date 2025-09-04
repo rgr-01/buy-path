@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase, Profile } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -39,7 +42,7 @@ export function useAuth() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .single();
 
       if (error) {
@@ -72,14 +75,12 @@ export function useAuth() {
       // Create profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert([
-          {
-            id: data.user.id,
-            nome,
-            email,
-            departamento,
-          },
-        ]);
+        .insert({
+          user_id: data.user.id,
+          nome,
+          email,
+          departamento,
+        });
 
       if (profileError) {
         console.error('Error creating profile:', profileError);
@@ -100,7 +101,7 @@ export function useAuth() {
     const { data, error } = await supabase
       .from('profiles')
       .update(updates)
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .select()
       .single();
 

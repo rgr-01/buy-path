@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, File, X, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface FileUploadProps {
