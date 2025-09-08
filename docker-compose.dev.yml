@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Aplicação em modo desenvolvimento
+  compras-pro-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    restart: unless-stopped
+    networks:
+      - compras-pro-network
+
+  # Banco de dados PostgreSQL
+  supabase-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: compras_pro
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_PORT: 5432
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - compras-pro-network
+
+volumes:
+  postgres_data:
+
+networks:
+  compras-pro-network:
+    driver: bridge

@@ -1,0 +1,23 @@
+# Dockerfile para desenvolvimento
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Instalar dependências globais
+RUN npm install -g npm@latest
+
+# Copiar arquivos de dependências
+COPY package*.json ./
+COPY bun.lockb ./
+
+# Instalar dependências
+RUN npm install
+
+# Copiar código fonte
+COPY . .
+
+# Expor porta do Vite
+EXPOSE 5173
+
+# Comando para desenvolvimento
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
