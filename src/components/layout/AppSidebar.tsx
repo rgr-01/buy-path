@@ -19,8 +19,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 
 const navigationItems = [
@@ -39,7 +37,6 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -51,27 +48,21 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={state === "collapsed" ? "w-16" : "w-64"}
-      collapsible="icon"
+      className="w-64"
+      collapsible="none"
     >
       <SidebarContent className="bg-gradient-subtle">
         {/* Logo/Header */}
         <div className="p-6 border-b border-border">
-          {state === "expanded" ? (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-                <FileText className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-foreground">Compras Pro</h2>
-                <p className="text-xs text-muted-foreground">Sistema de Requisições</p>
-              </div>
-            </div>
-          ) : (
-            <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
               <FileText className="w-4 h-4 text-white" />
             </div>
-          )}
+            <div>
+              <h2 className="font-semibold text-foreground">Compras Pro</h2>
+              <p className="text-xs text-muted-foreground">Sistema de Requisições</p>
+            </div>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -112,10 +103,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Sidebar Toggle */}
-        <div className="mt-auto p-4">
-          <SidebarTrigger className="w-full" />
-        </div>
+        {/* Sidebar Toggle - Removed since sidebar is no longer collapsible */}
       </SidebarContent>
     </Sidebar>
   );
