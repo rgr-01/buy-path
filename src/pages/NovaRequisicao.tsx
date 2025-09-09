@@ -347,6 +347,108 @@ export function NovaRequisicao() {
               </CardContent>
             </Card>
 
+            {/* Itens da Requisição */}
+            <Card className="bg-gradient-card shadow-soft border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calculator className="h-5 w-5 text-primary" />
+                  Itens da Requisição
+                </CardTitle>
+                <CardDescription>
+                  Adicione os itens que precisam ser comprados
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4">
+                  {itens.map((item, index) => (
+                    <Card key={item.id} className="border border-border/50">
+                      <CardContent className="pt-4">
+                        <div className="flex justify-between items-start mb-4">
+                          <Badge variant="outline">Item {index + 1}</Badge>
+                          {itens.length > 1 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removerItem(item.id)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        
+                        <div className="grid gap-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor={`nome-${item.id}`}>Nome do Item *</Label>
+                              <Input
+                                id={`nome-${item.id}`}
+                                value={item.nome}
+                                onChange={(e) => atualizarItem(item.id, 'nome', e.target.value)}
+                                placeholder="Ex: Notebook Dell"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`quantidade-${item.id}`}>Quantidade *</Label>
+                              <Input
+                                id={`quantidade-${item.id}`}
+                                type="number"
+                                min="1"
+                                value={item.quantidade}
+                                onChange={(e) => atualizarItem(item.id, 'quantidade', parseInt(e.target.value) || 1)}
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor={`descricao-${item.id}`}>Descrição</Label>
+                            <Textarea
+                              id={`descricao-${item.id}`}
+                              value={item.descricao}
+                              onChange={(e) => atualizarItem(item.id, 'descricao', e.target.value)}
+                              placeholder="Descrição detalhada do item..."
+                              rows={2}
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor={`preco-unitario-${item.id}`}>Preço Unitário (R$)</Label>
+                              <Input
+                                id={`preco-unitario-${item.id}`}
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={item.preco_unitario}
+                                onChange={(e) => atualizarItem(item.id, 'preco_unitario', parseFloat(e.target.value) || 0)}
+                                placeholder="0,00"
+                              />
+                            </div>
+                            <div>
+                              <Label>Preço Total (R$)</Label>
+                              <div className="h-10 px-3 py-2 bg-muted rounded-md flex items-center text-sm font-medium">
+                                R$ {item.preco_total.toFixed(2).replace('.', ',')}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={adicionarItem}
+                  className="w-full border-dashed border-2 hover:border-primary hover:text-primary"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Item
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Anexos */}
             <Card className="bg-gradient-card shadow-soft border-border">
               <CardHeader>
