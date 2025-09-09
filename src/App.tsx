@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthGuard } from "./components/auth/AuthGuard";
 import Index from "./pages/Index";
 import { NovaRequisicao } from "./pages/NovaRequisicao";
+import { EditarRequisicao } from "./pages/EditarRequisicao";
 import { Requisicoes } from "./pages/Requisicoes";
 import { Pendentes } from "./pages/Pendentes";
 import { Aprovadas } from "./pages/Aprovadas";
@@ -27,6 +28,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/nova-requisicao" element={<NovaRequisicao />} />
+            <Route path="/editar-requisicao/:id" element={<EditarRequisicao />} />
             <Route path="/requisicoes" element={<Requisicoes />} />
             <Route path="/pendentes" element={<Pendentes />} />
             <Route path="/aprovadas" element={<Aprovadas />} />

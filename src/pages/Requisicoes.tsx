@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { downloadRequisicaoPDF, generateRelatorioGeralPDF } from "@/utils/pdfGenerator";
+import { useNavigate } from "react-router-dom";
 import { 
   FileText, 
   Search, 
@@ -19,7 +20,8 @@ import {
   Building2,
   User,
   FileBarChart,
-  Download
+  Download,
+  Send
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -27,10 +29,11 @@ import { ptBR } from "date-fns/locale";
 type Requisicao = ReturnType<typeof useRequisicoes>['minhasRequisicoes'][0];
 
 export function Requisicoes() {
-  const { minhasRequisicoes, loading } = useRequisicoes();
+  const { minhasRequisicoes, loading, enviarParaAprovacao } = useRequisicoes();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const filteredRequisicoes = minhasRequisicoes.filter(req => {
     const matchesSearch = req.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -91,6 +94,35 @@ export function Requisicoes() {
       toast({
         title: "Erro",
         description: "Falha ao gerar relatório",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditarRequisicao = (id: string) => {
+    navigate(`/editar-requisicao/${id}`);
+  };
+
+  const handleEnviarParaAprovacao = async (requisicao: any) => {
+    try {
+      const { error } = await enviarParaAprovacao(requisicao.id);
+      
+      if (error) {
+        toast({
+          title: "Erro ao enviar",
+          description: "Não foi possível enviar para aprovação.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Enviado para aprovação",
+          description: `Requisição ${requisicao.codigo} enviada para aprovação.`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente mais tarde.",
         variant: "destructive",
       });
     }
@@ -190,7 +222,10 @@ export function Requisicoes() {
                   }
                 </p>
                 {!searchTerm && statusFilter === "all" && (
-                  <Button className="bg-gradient-primary hover:bg-primary-hover">
+                  <Button 
+                    className="bg-gradient-primary hover:bg-primary-hover"
+                    onClick={() => navigate('/nova-requisicao')}
+                  >
                     Criar Nova Requisição
                   </Button>
                 )}
@@ -258,9 +293,23 @@ export function Requisicoes() {
                             <Download className="h-4 w-4" />
                           </Button>
                           {requisicao.status === 'rascunho' && (
-                            <Button variant="ghost" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            <>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditarRequisicao(requisicao.id)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEnviarParaAprovacao(requisicao)}
+                                className="text-primary hover:text-primary hover:bg-primary/10"
+                              >
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </TableCell>

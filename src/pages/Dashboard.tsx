@@ -118,7 +118,10 @@ export function Dashboard() {
             Visão geral das suas requisições de compras
           </p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-primary-hover shadow-medium hover:shadow-large transition-bounce">
+        <Button 
+          className="bg-gradient-primary hover:bg-primary-hover shadow-medium hover:shadow-large transition-bounce"
+          onClick={() => navigate('/nova-requisicao')}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Nova Requisição
         </Button>
