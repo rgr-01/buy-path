@@ -192,10 +192,9 @@ export function NovaRequisicao() {
       const { error: enviarError } = await enviarParaAprovacao(data.id);
       
       if (enviarError) {
-        console.error('Erro ao enviar para aprovação:', enviarError);
         toast({
           title: "Erro ao enviar",
-          description: `Alterações salvas mas não foi possível enviar para aprovação. ${enviarError.message || ''}`,
+          description: "Requisição criada mas não foi possível enviar para aprovação.",
           variant: "destructive",
         });
       } else {

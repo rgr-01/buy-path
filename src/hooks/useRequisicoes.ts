@@ -144,8 +144,6 @@ export function useRequisicoes() {
     itens?: Omit<ItemRequisicao, 'id' | 'requisicao_id' | 'created_at' | 'preco_total'>[]
   ) => {
     try {
-      console.log('Updating requisicao:', id, updates);
-      
       // Update requisition
       const { data, error: updateError } = await supabase
         .from('requisicoes')
@@ -154,12 +152,7 @@ export function useRequisicoes() {
         .select()
         .single();
 
-      if (updateError) {
-        console.error('Update error:', updateError);
-        throw updateError;
-      }
-
-      console.log('Update successful:', data);
+      if (updateError) throw updateError;
 
       // Update items if provided
       if (itens) {
