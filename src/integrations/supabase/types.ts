@@ -60,13 +60,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "anexos_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles_basic"
-            referencedColumns: ["id"]
-          },
         ]
       }
       departamentos: {
@@ -97,13 +90,6 @@ export type Database = {
             columns: ["responsavel_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "departamentos_responsavel_id_fkey"
-            columns: ["responsavel_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_basic"
             referencedColumns: ["id"]
           },
         ]
@@ -225,13 +211,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "log_auditoria_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_basic"
-            referencedColumns: ["id"]
-          },
         ]
       }
       profiles: {
@@ -325,13 +304,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "requisicoes_aprovador_id_fkey"
-            columns: ["aprovador_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_basic"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "requisicoes_departamento_id_fkey"
             columns: ["departamento_id"]
             isOneToOne: false
@@ -352,47 +324,52 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "requisicoes_solicitante_id_fkey"
-            columns: ["solicitante_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_basic"
-            referencedColumns: ["id"]
-          },
         ]
       }
-    }
-    Views: {
-      profiles_basic: {
+      user_roles: {
         Row: {
-          departamento: string | null
-          id: string | null
-          nome: string | null
-          role: string | null
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Insert: {
-          departamento?: string | null
-          id?: string | null
-          nome?: string | null
-          role?: string | null
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Update: {
-          departamento?: string | null
-          id?: string | null
-          nome?: string | null
-          role?: string | null
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
+    }
+    Views: {
+      [_ in never]: never
     }
     Functions: {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "aprovador" | "solicitante"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -519,6 +496,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "aprovador", "solicitante"],
+    },
   },
 } as const

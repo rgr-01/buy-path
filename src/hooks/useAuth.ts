@@ -8,6 +8,7 @@ type Profile = Database['public']['Tables']['profiles']['Row'];
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userRole, setUserRole] = useState<string>('solicitante');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,6 +51,14 @@ export function useAuth() {
       } else {
         setProfile(data as Profile);
       }
+
+      // Fetch user role from user_roles table
+      const { data: roleData } = await supabase
+        .rpc('get_user_role', { _user_id: userId });
+      
+      if (roleData) {
+        setUserRole(roleData);
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -84,6 +93,18 @@ export function useAuth() {
 
       if (profileError) {
         console.error('Error creating profile:', profileError);
+      }
+
+      // Assign default role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: data.user.id,
+          role: 'solicitante',
+        });
+
+      if (roleError) {
+        console.error('Error assigning role:', roleError);
       }
     }
 
@@ -120,7 +141,7 @@ export function useAuth() {
     signUp,
     signOut,
     updateProfile,
-    isAdmin: profile?.role === 'admin',
-    isAprovador: profile?.role === 'aprovador' || profile?.role === 'admin',
+    isAdmin: userRole === 'admin',
+    isAprovador: userRole === 'aprovador' || userRole === 'admin',
   };
 }

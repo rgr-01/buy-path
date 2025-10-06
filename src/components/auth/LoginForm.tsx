@@ -85,29 +85,8 @@ export function LoginForm() {
     }
   };
 
-  const quickLogin = async (role: 'admin' | 'aprovador' | 'solicitante') => {
-    const credentials = {
-      admin: { email: 'admin@empresa.com', password: 'admin123' },
-      aprovador: { email: 'aprovador@empresa.com', password: 'aprovador123' },
-      solicitante: { email: 'usuario@empresa.com', password: 'usuario123' }
-    };
-
-    const { email, password } = credentials[role];
-    setLoginEmail(email);
-    setLoginPassword(password);
-    
-    setLoading(true);
-    const { error } = await signIn(email, password);
-    
-    if (error) {
-      toast({
-        title: 'Erro no login',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-    setLoading(false);
-  };
+  // SECURITY: Demo credentials removed for production security
+  // Quick login functionality removed to prevent credential exposure in client-side code
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
@@ -183,40 +162,6 @@ export function LoginForm() {
                     Entrar
                   </Button>
                 </form>
-
-                {/* Quick login buttons for demo */}
-                <div className="space-y-2 pt-4 border-t border-border">
-                  <p className="text-xs text-muted-foreground text-center">Login rápido para demo:</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => quickLogin('admin')}
-                      disabled={loading}
-                      className="text-xs"
-                    >
-                      Admin
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => quickLogin('aprovador')}
-                      disabled={loading}
-                      className="text-xs"
-                    >
-                      Aprovador
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => quickLogin('solicitante')}
-                      disabled={loading}
-                      className="text-xs"
-                    >
-                      Usuário
-                    </Button>
-                  </div>
-                </div>
               </TabsContent>
 
               <TabsContent value="register" className="space-y-4">

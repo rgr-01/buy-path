@@ -29,7 +29,7 @@ const userSchema = z.object({
 type UserForm = z.infer<typeof userSchema>;
 
 export default function AdminUsuarios() {
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -75,19 +75,35 @@ export default function AdminUsuarios() {
   const onSubmit = async (data: UserForm) => {
     try {
       if (editingUser) {
-        // Update existing user
-        const { error } = await supabase
+        // Update existing user profile
+        const { error: updateError } = await supabase
           .from('profiles')
           .update({
             nome: data.nome,
             departamento: data.departamento,
             cargo: data.cargo,
-            role: data.role,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingUser.id);
 
-        if (error) throw error;
+        if (updateError) throw updateError;
+
+        // Update role in user_roles table (server-side validation via RLS)
+        // First delete existing role
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', editingUser.user_id);
+
+        // Then insert new role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: editingUser.user_id,
+            role: data.role,
+          });
+
+        if (roleError) throw roleError;
 
         toast({
           title: "Sucesso",
@@ -112,10 +128,19 @@ export default function AdminUsuarios() {
             email: data.email,
             departamento: data.departamento,
             cargo: data.cargo,
-            role: data.role,
           });
 
         if (profileError) throw profileError;
+
+        // Create role in user_roles table (server-side validation via RLS)
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: data.role,
+          });
+
+        if (roleError) throw roleError;
 
         toast({
           title: "Sucesso",
@@ -193,7 +218,8 @@ export default function AdminUsuarios() {
     }
   };
 
-  if (profile?.role !== 'admin') {
+  // SECURITY: Server-side role validation via user_roles table
+  if (!isAdmin) {
     return (
       <div className="container mx-auto p-6">
         <Card>
@@ -201,7 +227,7 @@ export default function AdminUsuarios() {
             <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Acesso Negado</h2>
             <p className="text-muted-foreground">
-              Você não tem permissão para acessar esta página.
+              Você não tem permissão para acessar esta página. Acesso restrito a administradores.
             </p>
           </CardContent>
         </Card>
