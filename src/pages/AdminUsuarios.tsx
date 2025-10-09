@@ -24,6 +24,7 @@ const userSchema = z.object({
   departamento: z.string().optional(),
   cargo: z.string().optional(),
   role: z.enum(['solicitante', 'aprovador', 'admin']),
+  senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').optional().or(z.literal('')),
 });
 
 type UserForm = z.infer<typeof userSchema>;
@@ -44,6 +45,7 @@ export default function AdminUsuarios() {
       departamento: '',
       cargo: '',
       role: 'solicitante',
+      senha: '',
     },
   });
 
@@ -88,6 +90,16 @@ export default function AdminUsuarios() {
 
         if (updateError) throw updateError;
 
+        // Update password if provided
+        if (data.senha && data.senha.trim() !== '') {
+          const { error: passwordError } = await supabase.auth.admin.updateUserById(
+            editingUser.user_id,
+            { password: data.senha }
+          );
+
+          if (passwordError) throw passwordError;
+        }
+
         // Update role in user_roles table (server-side validation via RLS)
         // First delete existing role
         await supabase
@@ -107,13 +119,14 @@ export default function AdminUsuarios() {
 
         toast({
           title: "Sucesso",
-          description: "Usuário atualizado com sucesso",
+          description: data.senha ? "Usuário e senha atualizados com sucesso" : "Usuário atualizado com sucesso",
         });
       } else {
         // Create new user via auth
+        const senha = data.senha && data.senha.trim() !== '' ? data.senha : 'TempPass123!';
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
           email: data.email,
-          password: 'TempPass123!', // Temporary password - user should change on first login
+          password: senha,
           email_confirm: true,
         });
 
@@ -144,7 +157,7 @@ export default function AdminUsuarios() {
 
         toast({
           title: "Sucesso",
-          description: "Usuário criado com sucesso. Senha temporária: TempPass123!",
+          description: data.senha ? `Usuário criado com senha definida` : `Usuário criado com senha temporária: TempPass123!`,
         });
       }
 
@@ -170,6 +183,7 @@ export default function AdminUsuarios() {
       departamento: user.departamento || '',
       cargo: user.cargo || '',
       role: user.role as 'solicitante' | 'aprovador' | 'admin',
+      senha: '',
     });
     setDialogOpen(true);
   };
@@ -333,6 +347,28 @@ export default function AdminUsuarios() {
                       <SelectItem value="admin">Administrador</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="senha">
+                    {editingUser ? 'Nova Senha (deixe em branco para manter)' : 'Senha'}
+                  </Label>
+                  <Input
+                    id="senha"
+                    type="password"
+                    {...form.register('senha')}
+                    placeholder={editingUser ? 'Digite para alterar senha' : 'Mínimo 6 caracteres'}
+                  />
+                  {form.formState.errors.senha && (
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.senha.message}
+                    </p>
+                  )}
+                  {!editingUser && !form.watch('senha') && (
+                    <p className="text-sm text-muted-foreground">
+                      Senha padrão será: TempPass123!
+                    </p>
+                  )}
                 </div>
               </div>
               
