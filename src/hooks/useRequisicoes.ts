@@ -215,6 +215,23 @@ export function useRequisicoes() {
     });
   };
 
+  const deleteRequisicao = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('requisicoes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchRequisicoes();
+      return { error: null };
+    } catch (error) {
+      console.error('Error deleting requisicao:', error);
+      return { error };
+    }
+  };
+
   // Computed values
   const minhasRequisicoes = requisicoes.filter(req => req.solicitante_id === profile?.id);
   const requisicoesParaAprovar = requisicoes.filter(
@@ -248,6 +265,7 @@ export function useRequisicoes() {
     aprovarRequisicao,
     rejeitarRequisicao,
     enviarParaAprovacao,
+    deleteRequisicao,
     refetch: fetchRequisicoes,
   };
 }

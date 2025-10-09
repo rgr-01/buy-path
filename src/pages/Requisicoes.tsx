@@ -21,15 +21,27 @@ import {
   User,
   FileBarChart,
   Download,
-  Send
+  Send,
+  Trash2
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type Requisicao = ReturnType<typeof useRequisicoes>['minhasRequisicoes'][0];
 
 export function Requisicoes() {
-  const { minhasRequisicoes, loading, enviarParaAprovacao } = useRequisicoes();
+  const { minhasRequisicoes, loading, enviarParaAprovacao, deleteRequisicao } = useRequisicoes();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
@@ -117,6 +129,31 @@ export function Requisicoes() {
         toast({
           title: "Enviado para aprovação",
           description: `Requisição ${requisicao.codigo} enviada para aprovação.`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro inesperado",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteRequisicao = async (requisicao: any) => {
+    try {
+      const { error } = await deleteRequisicao(requisicao.id);
+      
+      if (error) {
+        toast({
+          title: "Erro ao excluir",
+          description: "Não foi possível excluir a requisição.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Requisição excluída",
+          description: `Requisição ${requisicao.codigo} foi excluída com sucesso.`,
         });
       }
     } catch (error) {
@@ -309,6 +346,34 @@ export function Requisicoes() {
                               >
                                 <Send className="h-4 w-4" />
                               </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Excluir requisição?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta ação não pode ser desfeita. A requisição {requisicao.codigo} será permanentemente excluída.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteRequisicao(requisicao)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </>
                           )}
                         </div>
