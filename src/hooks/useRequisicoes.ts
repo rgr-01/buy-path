@@ -16,22 +16,23 @@ type Departamento = Database['public']['Tables']['departamentos']['Row'];
 type Fornecedor = Database['public']['Tables']['fornecedores']['Row'];
 
 export function useRequisicoes() {
-  const { user, profile } = useAuth();
+  const { user, profile, userRole } = useAuth();
   const [requisicoes, setRequisicoes] = useState<Requisicao[]>([]);
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user && profile) {
       fetchRequisicoes();
       fetchDepartamentos();
       fetchFornecedores();
     }
-  }, [user]);
+  }, [user, profile]);
 
   const fetchRequisicoes = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('requisicoes')
         .select(`
@@ -46,11 +47,13 @@ export function useRequisicoes() {
 
       if (error) {
         console.error('Error fetching requisicoes:', error);
+        setRequisicoes([]);
       } else {
         setRequisicoes((data as any) || []);
       }
     } catch (error) {
       console.error('Error:', error);
+      setRequisicoes([]);
     } finally {
       setLoading(false);
     }
@@ -215,7 +218,7 @@ export function useRequisicoes() {
   // Computed values
   const minhasRequisicoes = requisicoes.filter(req => req.solicitante_id === profile?.id);
   const requisicoesParaAprovar = requisicoes.filter(
-    req => req.status === 'pendente' && (profile?.role === 'aprovador' || profile?.role === 'admin')
+    req => req.status === 'pendente' && (userRole === 'aprovador' || userRole === 'admin')
   );
   const requisicoesAprovadas = requisicoes.filter(req => req.status === 'aprovada');
   const requisicoesPendentes = requisicoes.filter(req => req.status === 'pendente');

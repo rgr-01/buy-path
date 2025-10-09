@@ -136,6 +136,7 @@ export function useAuth() {
   return {
     user,
     profile,
+    userRole,
     loading,
     signIn,
     signUp,
