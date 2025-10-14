@@ -3,6 +3,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 
+const SUPABASE_URL = "https://nrcxhghpoandppvgsovn.supabase.co";
+
 type Profile = Database['public']['Tables']['profiles']['Row'];
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,87 +79,71 @@ export default function AdminUsuarios() {
   const onSubmit = async (data: UserForm) => {
     try {
       if (editingUser) {
-        // Update existing user profile
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            nome: data.nome,
-            departamento: data.departamento,
-            cargo: data.cargo,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', editingUser.id);
+        // Update existing user via edge function
+        const { data: session } = await supabase.auth.getSession();
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/admin-update-user`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.session?.access_token}`,
+            },
+            body: JSON.stringify({
+              userId: editingUser.user_id,
+              profileId: editingUser.id,
+              nome: data.nome,
+              departamento: data.departamento,
+              cargo: data.cargo,
+              password: data.senha,
+              role: data.role,
+            }),
+          }
+        );
 
-        if (updateError) throw updateError;
-
-        // Update password if provided
-        if (data.senha && data.senha.trim() !== '') {
-          const { error: passwordError } = await supabase.auth.admin.updateUserById(
-            editingUser.user_id,
-            { password: data.senha }
-          );
-
-          if (passwordError) throw passwordError;
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Falha ao atualizar usuário');
         }
-
-        // Update role in user_roles table (server-side validation via RLS)
-        // First delete existing role
-        await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', editingUser.user_id);
-
-        // Then insert new role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: editingUser.user_id,
-            role: data.role,
-          });
-
-        if (roleError) throw roleError;
 
         toast({
           title: "Sucesso",
           description: data.senha ? "Usuário e senha atualizados com sucesso" : "Usuário atualizado com sucesso",
         });
       } else {
-        // Create new user via auth
-        const senha = data.senha && data.senha.trim() !== '' ? data.senha : 'TempPass123!';
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: data.email,
-          password: senha,
-          email_confirm: true,
-        });
+        // Create new user via edge function
+        const { data: session } = await supabase.auth.getSession();
+        const senha = data.senha && data.senha.trim() !== '' ? data.senha : undefined;
+        
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/admin-create-user`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.session?.access_token}`,
+            },
+            body: JSON.stringify({
+              email: data.email,
+              password: senha,
+              nome: data.nome,
+              departamento: data.departamento,
+              cargo: data.cargo,
+              role: data.role,
+            }),
+          }
+        );
 
-        if (authError) throw authError;
-
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: authData.user.id,
-            nome: data.nome,
-            email: data.email,
-            departamento: data.departamento,
-            cargo: data.cargo,
-          });
-
-        if (profileError) throw profileError;
-
-        // Create role in user_roles table (server-side validation via RLS)
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: data.role,
-          });
-
-        if (roleError) throw roleError;
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Falha ao criar usuário');
+        }
 
         toast({
           title: "Sucesso",
-          description: data.senha ? `Usuário criado com senha definida` : `Usuário criado com senha temporária: TempPass123!`,
+          description: senha ? `Usuário criado com senha definida` : `Usuário criado com senha temporária: TempPass123!`,
         });
       }
 
@@ -192,8 +178,24 @@ export default function AdminUsuarios() {
     if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) throw error;
+      const { data: session } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/admin-delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.session?.access_token}`,
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Falha ao excluir usuário');
+      }
 
       toast({
         title: "Sucesso",
