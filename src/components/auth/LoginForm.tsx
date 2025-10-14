@@ -57,7 +57,7 @@ export function LoginForm() {
         </div>
 
         <Card className="bg-gradient-card shadow-elegant border-border">
-          <CardHeader>
+          <CardHeader className="text-center">
             <CardTitle>Login</CardTitle>
           </CardHeader>
           <CardContent>
