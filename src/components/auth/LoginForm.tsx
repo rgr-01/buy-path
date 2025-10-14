@@ -54,15 +54,11 @@ export function LoginForm() {
             <FileText className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-foreground">Compras Pro</h1>
-          <p className="text-muted-foreground mt-2">Sistema de Requisições de Compras</p>
         </div>
 
         <Card className="bg-gradient-card shadow-elegant border-border">
           <CardHeader>
-            <CardTitle>Acesso ao Sistema</CardTitle>
-            <CardDescription>
-              Entre com suas credenciais
-            </CardDescription>
+            <CardTitle>Login</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
