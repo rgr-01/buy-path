@@ -1,7 +1,8 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import { Bell, User, LogOut } from "lucide-react";
+import { Bell, User, LogOut, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,38 +31,51 @@ export function AppLayout({ children }: AppLayoutProps) {
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-subtle">
+      <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         
         <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-            <div className="flex h-16 items-center justify-between px-6">
-              <div className="flex items-center gap-4">
-                <h1 className="text-lg font-semibold text-foreground">
-                  Sistema de Requisições de Compras
-                </h1>
+          {/* Topbar - Fundo branco */}
+          <header className="h-16 border-b border-border bg-card sticky top-0 z-40">
+            <div className="flex h-full items-center justify-between px-6">
+              {/* Search Bar - Central */}
+              <div className="flex-1 max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    type="search"
+                    placeholder="Buscar requisições, fornecedores..."
+                    className="pl-10 h-10 bg-muted border-0 focus:bg-card focus:border-primary"
+                  />
+                </div>
               </div>
               
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 {/* Notifications */}
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full flex items-center justify-center">
-                    <span className="text-[10px] text-destructive-foreground font-medium">3</span>
-                  </span>
+                <Button variant="ghost" size="icon" className="relative h-10 w-10 hover:bg-muted">
+                  <Bell className="h-5 w-5 text-muted-foreground" />
+                  <span className="absolute top-2 right-2 h-2 w-2 bg-destructive rounded-full" />
                 </Button>
 
                 {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar className="h-10 w-10">
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                      <Avatar className="h-10 w-10 border-2 border-border">
                         <AvatarImage src="/avatars/user.png" alt="Usuário" />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          <User className="h-4 w-4" />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
+                          {profile?.nome ? getInitials(profile.nome) : <User className="h-4 w-4" />}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -78,9 +92,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>
                       <User className="mr-2 h-4 w-4" />
-                      <span>Perfil</span>
+                      <span>Meu Perfil</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleLogout}>
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Sair</span>
                     </DropdownMenuItem>
@@ -92,7 +106,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           {/* Main Content */}
           <main className="flex-1 p-6">
-            {children}
+            <div className="max-w-[1320px] mx-auto">
+              {children}
+            </div>
           </main>
         </div>
       </div>

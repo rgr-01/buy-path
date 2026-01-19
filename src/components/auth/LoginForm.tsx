@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ShoppingCart, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export function LoginForm() {
@@ -46,35 +46,39 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
+        {/* Header - ComprasPro Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-primary mb-4">
-            <FileText className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-primary shadow-medium mb-4">
+            <ShoppingCart className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Compras Pro</h1>
+          <h1 className="text-page-title text-foreground">ComprasPro</h1>
+          <p className="text-body-sm text-muted-foreground mt-1">
+            Gestão inteligente de requisições e compras
+          </p>
         </div>
 
-        <Card className="bg-gradient-card shadow-elegant border-border">
-          <CardHeader className="text-center">
-            <CardTitle>Login</CardTitle>
+        <Card className="shadow-elegant">
+          <CardHeader className="text-center pb-2">
+            <CardTitle className="text-card-title">Acesse sua conta</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-label">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
+                  className="h-10"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password" className="text-label">Senha</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -82,26 +86,27 @@ export function LoginForm() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Sua senha"
+                    className="h-10 pr-10"
                     required
                   />
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full w-10 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-4 w-4 text-muted-foreground" />
                     )}
                   </Button>
                 </div>
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-primary hover:bg-primary-hover"
+                className="w-full h-10"
                 disabled={loading}
               >
                 {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -110,6 +115,10 @@ export function LoginForm() {
             </form>
           </CardContent>
         </Card>
+
+        <p className="text-center text-body-sm text-muted-foreground mt-6">
+          © 2024 ComprasPro. Todos os direitos reservados.
+        </p>
       </div>
     </div>
   );
