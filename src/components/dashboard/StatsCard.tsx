@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,56 +22,50 @@ export function StatsCard({
   trend,
   variant = "default" 
 }: StatsCardProps) {
-  const variantStyles = {
-    default: "border-border",
-    success: "border-success/20 bg-success-light/50",
-    warning: "border-warning/20 bg-warning-light/50",
-    destructive: "border-destructive/20 bg-destructive-light/50"
-  };
-
   const iconStyles = {
-    default: "text-primary bg-primary-light",
-    success: "text-success bg-success-light",
-    warning: "text-warning bg-warning-light",
-    destructive: "text-destructive bg-destructive-light"
+    default: "bg-primary-light text-primary",
+    success: "bg-success-light text-success",
+    warning: "bg-warning-light text-warning",
+    destructive: "bg-destructive-light text-destructive"
   };
 
   return (
-    <Card className={cn(
-      "bg-gradient-card shadow-soft hover:shadow-medium transition-smooth border",
-      variantStyles[variant]
-    )}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <div className={cn(
-          "h-10 w-10 rounded-lg flex items-center justify-center",
-          iconStyles[variant]
-        )}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-foreground">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {description}
-          </p>
-        )}
-        {trend && (
-          <div className="flex items-center mt-2">
-            <span className={cn(
-              "text-xs font-medium",
-              trend.value > 0 ? "text-success" : trend.value < 0 ? "text-destructive" : "text-muted-foreground"
-            )}>
-              {trend.value > 0 ? "+" : ""}{trend.value}%
-            </span>
-            <span className="text-xs text-muted-foreground ml-1">
-              {trend.label}
-            </span>
+    <Card className="bg-card shadow-soft border border-border hover:shadow-medium transition-all duration-200">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-label text-muted-foreground uppercase tracking-wider mb-2">
+              {title}
+            </p>
+            <p className="text-metric font-bold text-foreground">
+              {value}
+            </p>
+            {description && (
+              <p className="text-body-sm text-muted-foreground mt-1">
+                {description}
+              </p>
+            )}
+            {trend && (
+              <div className="flex items-center gap-1 mt-2">
+                <span className={cn(
+                  "text-body-sm font-medium",
+                  trend.value > 0 ? "text-success" : trend.value < 0 ? "text-destructive" : "text-muted-foreground"
+                )}>
+                  {trend.value > 0 ? "+" : ""}{trend.value}%
+                </span>
+                <span className="text-body-sm text-muted-foreground">
+                  {trend.label}
+                </span>
+              </div>
+            )}
           </div>
-        )}
+          <div className={cn(
+            "h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0",
+            iconStyles[variant]
+          )}>
+            <Icon className="h-6 w-6" />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
