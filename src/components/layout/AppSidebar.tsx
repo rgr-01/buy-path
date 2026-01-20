@@ -34,6 +34,7 @@ const navigationItems = [
 const adminItems = [
   { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
   { title: "Fornecedores", url: "/fornecedores", icon: Building2 },
+  { title: "Departamentos", url: "/departamentos", icon: Building2 },
   { title: "Usuários", url: "/admin/usuarios", icon: Users },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];

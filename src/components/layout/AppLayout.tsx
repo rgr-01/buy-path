@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -61,7 +62,10 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                {/* Theme Toggle */}
+                <ThemeToggle />
+
                 {/* Notifications */}
                 <Button variant="ghost" size="icon" className="relative h-10 w-10 hover:bg-muted">
                   <Bell className="h-5 w-5 text-muted-foreground" />
