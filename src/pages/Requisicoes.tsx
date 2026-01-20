@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { downloadRequisicaoPDF, generateRelatorioGeralPDF } from "@/utils/pdfGenerator";
 import { useNavigate } from "react-router-dom";
+import { RequisicaoViewDialog } from "@/components/requisicoes/RequisicaoViewDialog";
 import { 
   FileText, 
   Search, 
@@ -44,8 +45,15 @@ export function Requisicoes() {
   const { minhasRequisicoes, loading, enviarParaAprovacao, deleteRequisicao } = useRequisicoes();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedRequisicao, setSelectedRequisicao] = useState<Requisicao | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleViewRequisicao = (requisicao: Requisicao) => {
+    setSelectedRequisicao(requisicao);
+    setViewDialogOpen(true);
+  };
 
   const filteredRequisicoes = minhasRequisicoes.filter(req => {
     const matchesSearch = req.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -319,7 +327,12 @@ export function Requisicoes() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleViewRequisicao(requisicao)}
+                            title="Visualizar"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button 
@@ -385,6 +398,13 @@ export function Requisicoes() {
             )}
           </CardContent>
         </Card>
+
+        {/* View Dialog */}
+        <RequisicaoViewDialog
+          requisicao={selectedRequisicao}
+          open={viewDialogOpen}
+          onOpenChange={setViewDialogOpen}
+        />
       </div>
     </AppLayout>
   );
