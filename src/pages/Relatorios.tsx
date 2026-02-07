@@ -12,42 +12,10 @@ import {
   PieChart,
   Activity
 } from "lucide-react";
-import { useState, useEffect } from "react";
-
-interface RelatorioDados {
-  totalRequisicoes: number;
-  requisicoesAprovadas: number;
-  requisicoesPendentes: number;
-  requisicoesRejeitadas: number;
-  valorTotalGasto: number;
-  valorMedioRequisicao: number;
-}
+import { useRequisicoes } from "@/hooks/useRequisicoes";
 
 export function Relatorios() {
-  const [dados, setDados] = useState<RelatorioDados>({
-    totalRequisicoes: 0,
-    requisicoesAprovadas: 0,
-    requisicoesPendentes: 0,
-    requisicoesRejeitadas: 0,
-    valorTotalGasto: 0,
-    valorMedioRequisicao: 0
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Simular carregamento de dados
-    setTimeout(() => {
-      setDados({
-        totalRequisicoes: 156,
-        requisicoesAprovadas: 124,
-        requisicoesPendentes: 23,
-        requisicoesRejeitadas: 9,
-        valorTotalGasto: 45680.50,
-        valorMedioRequisicao: 1250.75
-      });
-      setLoading(false);
-    }, 1000);
-  }, []);
+  const { requisicoes, loading } = useRequisicoes();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -55,6 +23,31 @@ export function Relatorios() {
       currency: 'BRL'
     }).format(value);
   };
+
+  // Calcular estatísticas reais do banco de dados
+  const requisicoesAprovadas = requisicoes.filter(r => r.status === 'aprovada').length;
+  const requisicoesPendentes = requisicoes.filter(r => r.status === 'pendente').length;
+  const requisicoesRejeitadas = requisicoes.filter(r => r.status === 'rejeitada').length;
+  const requisicoesRascunho = requisicoes.filter(r => r.status === 'rascunho').length;
+  const totalRequisicoes = requisicoes.length;
+  
+  const valorTotalGasto = requisicoes
+    .filter(r => r.status === 'aprovada')
+    .reduce((sum, r) => sum + (r.valor_total || 0), 0);
+  
+  const valorTotalPendente = requisicoes
+    .filter(r => r.status === 'pendente')
+    .reduce((sum, r) => sum + (r.valor_total || 0), 0);
+
+  const valorTotalRejeitado = requisicoes
+    .filter(r => r.status === 'rejeitada')
+    .reduce((sum, r) => sum + (r.valor_total || 0), 0);
+
+  const valorTotalGeral = requisicoes.reduce((sum, r) => sum + (r.valor_total || 0), 0);
+  
+  const valorMedioRequisicao = requisicoesAprovadas > 0 
+    ? valorTotalGasto / requisicoesAprovadas 
+    : 0;
 
   const calcularPercentual = (valor: number, total: number) => {
     return total > 0 ? ((valor / total) * 100).toFixed(1) : '0';
@@ -129,10 +122,10 @@ export function Relatorios() {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dados.totalRequisicoes}</div>
+              <div className="text-2xl font-bold">{totalRequisicoes}</div>
               <p className="text-xs text-muted-foreground">
                 <TrendingUp className="inline w-3 h-3 mr-1" />
-                +12% em relação ao mês anterior
+                Dados sincronizados com o banco
               </p>
             </CardContent>
           </Card>
@@ -140,12 +133,12 @@ export function Relatorios() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Aprovadas</CardTitle>
-              <BarChart3 className="h-4 w-4 text-green-600" />
+              <BarChart3 className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{dados.requisicoesAprovadas}</div>
+              <div className="text-2xl font-bold text-success">{requisicoesAprovadas}</div>
               <p className="text-xs text-muted-foreground">
-                {calcularPercentual(dados.requisicoesAprovadas, dados.totalRequisicoes)}% do total
+                {calcularPercentual(requisicoesAprovadas, totalRequisicoes)}% do total
               </p>
             </CardContent>
           </Card>
@@ -153,25 +146,25 @@ export function Relatorios() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-              <Activity className="h-4 w-4 text-yellow-600" />
+              <Activity className="h-4 w-4 text-warning" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{dados.requisicoesPendentes}</div>
+              <div className="text-2xl font-bold text-warning">{requisicoesPendentes}</div>
               <p className="text-xs text-muted-foreground">
-                {calcularPercentual(dados.requisicoesPendentes, dados.totalRequisicoes)}% do total
+                {calcularPercentual(requisicoesPendentes, totalRequisicoes)}% do total
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
+              <CardTitle className="text-sm font-medium">Valor Total Aprovado</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(dados.valorTotalGasto)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(valorTotalGasto)}</div>
               <p className="text-xs text-muted-foreground">
-                Média: {formatCurrency(dados.valorMedioRequisicao)}
+                Média: {formatCurrency(valorMedioRequisicao)}
               </p>
             </CardContent>
           </Card>
@@ -188,24 +181,31 @@ export function Relatorios() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-success rounded-full"></div>
                     <span className="text-sm">Aprovadas</span>
                   </div>
-                  <Badge variant="secondary">{dados.requisicoesAprovadas}</Badge>
+                  <Badge variant="secondary">{requisicoesAprovadas}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-warning rounded-full"></div>
                     <span className="text-sm">Pendentes</span>
                   </div>
-                  <Badge variant="secondary">{dados.requisicoesPendentes}</Badge>
+                  <Badge variant="secondary">{requisicoesPendentes}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-destructive rounded-full"></div>
                     <span className="text-sm">Rejeitadas</span>
                   </div>
-                  <Badge variant="secondary">{dados.requisicoesRejeitadas}</Badge>
+                  <Badge variant="secondary">{requisicoesRejeitadas}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-muted-foreground rounded-full"></div>
+                    <span className="text-sm">Rascunhos</span>
+                  </div>
+                  <Badge variant="secondary">{requisicoesRascunho}</Badge>
                 </div>
               </div>
             </CardContent>
@@ -213,13 +213,35 @@ export function Relatorios() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Tendência Mensal</CardTitle>
-              <CardDescription>Requisições nos últimos 6 meses</CardDescription>
+              <CardTitle>Resumo Financeiro</CardTitle>
+              <CardDescription>Valores das requisições por status</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <BarChart3 className="w-12 h-12 mx-auto mb-4" />
-                <p>Gráfico será implementado em breve</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Total Aprovado</span>
+                  <span className="font-semibold text-success">
+                    {formatCurrency(valorTotalGasto)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Total Pendente</span>
+                  <span className="font-semibold text-warning">
+                    {formatCurrency(valorTotalPendente)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Total Rejeitado</span>
+                  <span className="font-semibold text-destructive">
+                    {formatCurrency(valorTotalRejeitado)}
+                  </span>
+                </div>
+                <div className="border-t pt-4 flex items-center justify-between">
+                  <span className="text-sm font-medium">Valor Total Geral</span>
+                  <span className="font-bold">
+                    {formatCurrency(valorTotalGeral)}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
