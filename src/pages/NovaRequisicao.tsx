@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useRequisicoes } from "@/hooks/useRequisicoes";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { FileUpload } from "@/components/forms/FileUpload";
+import { FornecedorCombobox } from "@/components/requisicoes/FornecedorCombobox";
 import { 
   Plus, 
   Trash2, 
@@ -24,6 +25,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
 interface ItemRequisicao {
   id: string;
@@ -38,7 +41,12 @@ export function NovaRequisicao() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const { departamentos, fornecedores, createRequisicao, enviarParaAprovacao } = useRequisicoes();
+  const { departamentos, fornecedores, createRequisicao, enviarParaAprovacao, refetch } = useRequisicoes();
+  
+  // Função para atualizar a lista de fornecedores após cadastrar um novo
+  const handleFornecedorCreated = useCallback(() => {
+    refetch();
+  }, [refetch]);
   const [departamento, setDepartamento] = useState("");
   const [fornecedor, setFornecedor] = useState("");
   const [justificativa, setJustificativa] = useState("");
@@ -311,18 +319,12 @@ export function NovaRequisicao() {
 
                 <div>
                   <Label htmlFor="fornecedor">Fornecedor Sugerido</Label>
-                  <Select value={fornecedor} onValueChange={setFornecedor}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um fornecedor (opcional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fornecedores.map((forn) => (
-                        <SelectItem key={forn.id} value={forn.id}>
-                          {forn.nome} {forn.categoria && `- ${forn.categoria}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FornecedorCombobox
+                    fornecedores={fornecedores}
+                    value={fornecedor}
+                    onChange={setFornecedor}
+                    onFornecedorCreated={handleFornecedorCreated}
+                  />
                 </div>
               </CardContent>
             </Card>
