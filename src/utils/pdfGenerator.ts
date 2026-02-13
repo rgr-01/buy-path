@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import type { Database } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
 
 type Requisicao = Database['public']['Tables']['requisicoes']['Row'] & {
   solicitante?: Database['public']['Tables']['profiles']['Row'];
@@ -10,18 +11,63 @@ type Requisicao = Database['public']['Tables']['requisicoes']['Row'] & {
   itens?: Database['public']['Tables']['itens_requisicao']['Row'][];
 };
 
+const fetchEmpresaConfig = async () => {
+  const { data } = await supabase
+    .from('empresa_config')
+    .select('*')
+    .limit(1)
+    .single();
+  return data;
+};
+
+const loadImageAsBase64 = (url: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+};
+
 export const generateRequisicaoPDF = async (requisicao: Requisicao) => {
+  const empresaConfig = await fetchEmpresaConfig();
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.getWidth();
   const margin = 20;
   let yPosition = margin;
 
+  // Logo
+  if (empresaConfig?.logo_url) {
+    const logoBase64 = await loadImageAsBase64(empresaConfig.logo_url);
+    if (logoBase64) {
+      pdf.addImage(logoBase64, 'PNG', margin, yPosition, 30, 30);
+      yPosition += 5;
+    }
+  }
+
   // Header
+  const headerX = empresaConfig?.logo_url ? margin + 35 : margin;
   pdf.setFontSize(20);
   pdf.setTextColor(44, 62, 80);
-  pdf.text('REQUISIÇÃO DE COMPRA', margin, yPosition);
+  pdf.text('REQUISIÇÃO DE COMPRA', headerX, yPosition);
   
-  yPosition += 15;
+  if (empresaConfig?.nome_empresa) {
+    yPosition += 8;
+    pdf.setFontSize(10);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text(empresaConfig.nome_empresa, headerX, yPosition);
+  }
+
+  yPosition = empresaConfig?.logo_url ? margin + 35 : yPosition + 10;
+  yPosition += 5;
   pdf.setFontSize(12);
   pdf.setTextColor(100, 100, 100);
   pdf.text(`Código: ${requisicao.codigo}`, margin, yPosition);
@@ -154,17 +200,36 @@ export const downloadRequisicaoPDF = async (requisicao: Requisicao) => {
 };
 
 export const generateRelatorioGeralPDF = async (requisicoes: Requisicao[]) => {
+  const empresaConfig = await fetchEmpresaConfig();
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.getWidth();
   const margin = 20;
   let yPosition = margin;
 
+  // Logo
+  if (empresaConfig?.logo_url) {
+    const logoBase64 = await loadImageAsBase64(empresaConfig.logo_url);
+    if (logoBase64) {
+      pdf.addImage(logoBase64, 'PNG', margin, yPosition, 30, 30);
+      yPosition += 5;
+    }
+  }
+
   // Header
+  const headerX = empresaConfig?.logo_url ? margin + 35 : margin;
   pdf.setFontSize(20);
   pdf.setTextColor(44, 62, 80);
-  pdf.text('RELATÓRIO GERAL DE REQUISIÇÕES', margin, yPosition);
+  pdf.text('RELATÓRIO GERAL DE REQUISIÇÕES', headerX, yPosition);
+
+  if (empresaConfig?.nome_empresa) {
+    yPosition += 8;
+    pdf.setFontSize(10);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text(empresaConfig.nome_empresa, headerX, yPosition);
+  }
   
-  yPosition += 15;
+  yPosition = empresaConfig?.logo_url ? margin + 35 : yPosition + 10;
+  yPosition += 5;
   pdf.setFontSize(12);
   pdf.setTextColor(100, 100, 100);
   pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, margin, yPosition);

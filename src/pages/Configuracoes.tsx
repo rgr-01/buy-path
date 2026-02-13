@@ -14,15 +14,22 @@ import {
   Palette,
   Globe,
   Save,
-  RefreshCw
+  RefreshCw,
+  Upload,
+  ImageIcon,
+  Trash2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useEmpresaConfig } from "@/hooks/useEmpresaConfig";
 
 export function Configuracoes() {
+  const { config, uploadLogo, updateConfig } = useEmpresaConfig();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [configuracoes, setConfiguracoes] = useState({
     // Gerais
@@ -62,8 +69,13 @@ export function Configuracoes() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Simular salvamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (config) {
+        await updateConfig({
+          nome_empresa: configuracoes.nomeEmpresa,
+          cnpj: configuracoes.cnpj,
+          endereco: configuracoes.endereco,
+        });
+      }
       toast.success("Configurações salvas com sucesso!");
     } catch (error) {
       toast.error("Erro ao salvar configurações");
@@ -74,6 +86,36 @@ export function Configuracoes() {
 
   const handleReset = () => {
     toast.success("Configurações resetadas para o padrão");
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error("Por favor, selecione um arquivo de imagem");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB");
+      return;
+    }
+
+    setUploadingLogo(true);
+    const { error } = await uploadLogo(file);
+    setUploadingLogo(false);
+
+    if (error) {
+      toast.error("Erro ao enviar logo");
+    } else {
+      toast.success("Logo atualizada com sucesso!");
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    await updateConfig({ logo_url: null });
+    toast.success("Logo removida");
   };
 
   return (
@@ -119,7 +161,58 @@ export function Configuracoes() {
                   Configure as informações básicas da empresa
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
+                {/* Logo Upload */}
+                <div className="space-y-3">
+                  <Label>Logo da Empresa</Label>
+                  <p className="text-sm text-muted-foreground">
+                    A logo será exibida nos relatórios e PDFs gerados pelo sistema
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted">
+                      {config?.logo_url ? (
+                        <img 
+                          src={config.logo_url} 
+                          alt="Logo da empresa" 
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingLogo}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        {uploadingLogo ? "Enviando..." : "Enviar Logo"}
+                      </Button>
+                      {config?.logo_url && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={handleRemoveLogo}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Remover
+                        </Button>
+                      )}
+                      <p className="text-xs text-muted-foreground">PNG, JPG ou SVG. Máx. 2MB</p>
+                    </div>
+                  </div>
+                </div>
+                <Separator />
                 <div className="space-y-2">
                   <Label htmlFor="nomeEmpresa">Nome da Empresa</Label>
                   <Input
